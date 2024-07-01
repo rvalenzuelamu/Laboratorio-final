@@ -31,7 +31,7 @@ jobs:
           -X POST "https://sonarcloud.io/api/projects/create" \
           -d "name=${{ github.event.repository.name }}" \
           -d "project=${{ github.event.repository.name }}" \
-          -d "organization=devsecops" \
+          -d "organization=curso-devsecops-usach" \
           -d "visibility=public")
 
         if [ "$response" -eq 403 ]; then

@@ -23,6 +23,28 @@ jobs:
     - name: Build
       run: npm run build
 
+    - name: Validando tipo de proyecto
+      id: tipoProyecto
+      if: steps.validateProjectOnSonar.outputs.proyectoExiste == '1'
+      run: |
+        pwd
+        ls -R
+        if [ -f "package.json" ]
+        then
+          echo "Proyecto Node.js"
+          if grep -q '"sonarqube-scanner"' package.json
+          then
+            echo "El plugin de SonarCloud ya está presente en package.json"
+          else
+            echo '{"sonarqube-scanner": "^3.3.0"}' | jq --argjson scripts "$(jq '.scripts' package.json)" '. + {scripts: $scripts + {"sonarqube-scanner": "sonar-scanner"}}' > package.json
+            echo "El plugin de SonarCloud no estaba presente y se ha añadido a package.json"
+            cat package.json
+          fi
+        else
+          echo "Tipo de proyecto desconocido"
+        fi
+
+
     - name: Validando existencia de proyecto en SonarCloud
       id: validateProjectOnSonar
       run: |
@@ -38,30 +60,6 @@ jobs:
         fi
 
 
-    - name: Install jq
-      run: sudo apt-get install -y jq
-
-
-    - name: Validando tipo de proyecto
-      id: tipoProyecto
-      if: steps.validateProjectOnSonar.outputs.proyectoExiste == '1'
-      run: |
-        pwd
-        ls -R
-        if [ -f "package.json" ]
-        then
-          echo "Proyecto Node.js"
-          if grep -q '"sonarcloud"' package.json
-          then
-            echo "El script de SonarCloud ya está presente en package.json"
-          else
-            jq '.scripts.sonarcloud = "sonar-scanner"' package.json > tmp.$$.json && mv tmp.$$.json package.json
-            echo "El script de SonarCloud no estaba presente y se ha añadido a package.json"
-            cat package.json
-          fi
-        else
-          echo "Tipo de proyecto desconocido"
-        fi
 
 
 

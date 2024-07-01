@@ -27,7 +27,7 @@ jobs:
       id: validateProjectOnSonar
       run: |
         set +e
-        curl -f -X POST -u '2b65cc3d313056a98ae3a1c29c47e22850cd6f11' 'https://sonarcloud.io/api/projects/create' -d 'name=${{ github.event.repository.name }}' -d 'project=${{ github.event.repository.name }}' -d 'organization=curso-devsecops-usach' -d 'visibility=public'
+        curl -f -X POST -u '2b65cc3d313056a98ae3a1c29c47e22850cd6f11' 'https://sonarcloud.io/api/projects/create' -d 'name=${{ github.event.repository.name }}' -d 'project=${{ github.event.repository.name }}' -d 'organization=curso-devsecops' -d 'visibility=public'
         if [ $? -ne 0 ]
         then
           echo "Proyecto ya existe en Sonarcloud"

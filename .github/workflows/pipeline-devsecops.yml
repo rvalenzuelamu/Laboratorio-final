@@ -1,12 +1,8 @@
-name: CI Pipeline
-
+name: Workflow
 on:
   push:
     branches:
-      - main
-  pull_request:
-    branches:
-      - main
+      - pipeline-devsecops
 
 jobs:
   build:

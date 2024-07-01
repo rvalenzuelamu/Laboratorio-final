@@ -5,59 +5,48 @@ on:
       - pipeline-devsecops
 
 jobs:
-  build:
+#----------------- SAST ----------------------
+  SAST:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Set up Node.js 20
-      uses: actions/setup-node@v2
+    - name: Set up JDK 11
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'adopt'
+        java-version: '11'
+        
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
       with:
         node-version: '20'
 
-    - name: Instalar dependencias
-      run: npm install
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        token: ${{ secrets.TOKEN_GH }}
 
-    - name: Build
-      run: npm run build
+    - name: Install dependencies with Yarn 
+      run: yarn install
 
-    - name: Validando tipo de proyecto
-      id: tipoProyecto
-      if: steps.validateProjectOnSonar.outputs.proyectoExiste == '1'
-      run: |
-        pwd
-        ls -R
-        if [ -f "package.json" ]
-        then
-          echo "Proyecto Node.js"
-          if grep -q '"sonarqube-scanner"' package.json
-          then
-            echo "El plugin de SonarCloud ya está presente en package.json"
-          else
-            echo '{"sonarqube-scanner": "^3.3.0"}' | jq --argjson scripts "$(jq '.scripts' package.json)" '. + {scripts: $scripts + {"sonarqube-scanner": "sonar-scanner"}}' > package.json
-            echo "El plugin de SonarCloud no estaba presente y se ha añadido a package.json"
-            cat package.json
-          fi
-        else
-          echo "Tipo de proyecto desconocido"
-        fi
+    - name: Build project
+      run: yarn run build
 
+    - name: List Built Files
+      run: ls -l
 
-    - name: Validando existencia de proyecto en SonarCloud
-      id: validateProjectOnSonar
-      run: |
-        set +e
-        curl -f -X POST -u '2b65cc3d313056a98ae3a1c29c47e22850cd6f11' 'https://sonarcloud.io/api/projects/create' -d 'name=${{ github.event.repository.name }}' -d 'project=${{ github.event.repository.name }}' -d 'organization=curso-devsecops' -d 'visibility=public'
-        if [ $? -ne 0 ]
-        then
-          echo "Proyecto ya existe en Sonarcloud"
-        else
-          echo "Proyecto ${{ github.event.repository.name }} fue creado exitosamente en SonarCloud"
-          echo "Se establece rama main como rama por defecto"
-          curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/rename' -d 'name=main'  -d 'project=${{ github.event.repository.name }}'
-        fi
+    - name: SonarCloud Scan
+      uses: sonarsource/sonarcloud-github-action@v2 
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN_GH }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_PROJECT_KEY: curso-devsecops-usach_lab-final
+        SONAR_ORGANIZATION: curso-devsecops-usach
+      with:
+        args: >
+          -Dsonar.projectKey=curso-devsecops-usach_lab-final
+          -Dsonar.organization=curso-devsecops-usach
+          -Dsonar.sources=.
+          -Dsonar.exclusions=**/node_modules/**
 
 
 

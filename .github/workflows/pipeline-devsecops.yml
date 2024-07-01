@@ -23,6 +23,10 @@ jobs:
     - name: Build
       run: npm run build
 
+    - name: Install jq
+      run: sudo apt-get install -y jq
+
+
     - name: Validando tipo de proyecto
       id: tipoProyecto
       if: steps.validateProjectOnSonar.outputs.proyectoExiste == '1'

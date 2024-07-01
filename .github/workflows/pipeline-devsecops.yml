@@ -22,8 +22,6 @@ jobs:
 
     - name: Checkout code
       uses: actions/checkout@v2
-      with:
-        token: ${{ secrets.TOKEN_GH }}
 
     - name: Install dependencies with Yarn 
       run: yarn install
@@ -37,7 +35,6 @@ jobs:
     - name: SonarCloud Scan
       uses: sonarsource/sonarcloud-github-action@v2 
       env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN_GH }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_PROJECT_KEY: curso-devsecops-usach_lab-final
         SONAR_ORGANIZATION: curso-devsecops-usach

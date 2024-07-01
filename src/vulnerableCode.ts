@@ -1,5 +1,8 @@
 // Archivo: vulnerableCode.ts
 
+// Agrega una declaración de exportación vacía
+export {};
+
 interface User {
     username: string;
     isAdmin: boolean;

@@ -45,6 +45,17 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.exclusions=**/node_modules/**
 
+      - name: Check for Critical, High, and Medium Vulnerabilities
+        run: |
+          echo "Checking for Critical, High, and Medium vulnerabilities..."
+          vulnerabilities=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/issues/search?organization=curso-devsecops-usach&projectKeys=curso-devsecops-usach_lab-final&branch=pipeline-devsecops&severities=CRITICAL,MAJOR,MINOR&statuses=OPEN,REOPENED" | jq '.total')
+           if [ "$vulnerabilities" -gt 0 ]; then
+             echo "Found $vulnerabilities Critical, High, or Medium vulnerabilities"
+             exit 1
+           else
+             echo "No Critical, High, or Medium vulnerabilities found"
+           fi
+
   #    - name: Check Quality Gate
   #      run: |
   #        echo "Checking Quality Gate status on SonarCloud..."
@@ -56,13 +67,4 @@ jobs:
   #          echo "Quality Gate passed: $qualityGateStatus"
   #        fi
         
-        - name: Check for Critical, High, and Medium Vulnerabilities
-          run: |
-            echo "Checking for Critical, High, and Medium vulnerabilities..."
-            vulnerabilities=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/issues/search?organization=curso-devsecops-usach&projectKeys=curso-devsecops-usach_lab-final&branch=pipeline-devsecops&severities=CRITICAL,MAJOR,MINOR&statuses=OPEN,REOPENED" | jq '.total')
-            if [ "$vulnerabilities" -gt 0 ]; then
-              echo "Found $vulnerabilities Critical, High, or Medium vulnerabilities"
-              exit 1
-            else
-              echo "No Critical, High, or Medium vulnerabilities found"
-            fi
+

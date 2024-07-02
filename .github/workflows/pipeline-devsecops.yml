@@ -73,43 +73,36 @@ jobs:
   SCA:
     needs: SAST
     runs-on: ubuntu-latest
+
     steps:
-    
-    - name: Checkout code
-      uses: actions/checkout@v2      
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
 
-    - name: Install Yarn
-      run: npm install -g yarn
+      - name: Install dependencies
+        run: npm install
 
-    - name: Install dependencies
-      run: yarn install
+      - name: Run Dependency Check
+        uses: dependency-check/Dependency-Check_Action@1.1.0
+        env:
+          JAVA_HOME: /opt/jdk
+        id: Depcheck
+        with:
+          project: '${{ github.repository }}'
+          path: './'
+          format: 'HTML'
+          out: 'reports'
+          args: '--failOnCVSS 7 --enableRetired'
 
-    - name: Build project
-      run: yarn build
-
-    - name: Dependency Check
-      uses: dependency-check/Dependency-Check_Action@1.1.0
-      id: Depcheck
-      with:
-        project: '${{ github.event.repository.name }}'
-        path: '.'
-        format: 'HTML'
-        out: 'reports'
-        args: >
-          --failOnCVSS 7
-          --enableRetired
-          --scan yarn.lock
-
-    - name: Upload Dependency Check Report
-      uses: actions/upload-artifact@v2
-      with:
-        name: Depcheck report
-        path: ${{github.workspace}}/reports/dependency-check-report.html
+      - name: Upload Dependency Check report
+        uses: actions/upload-artifact@v2
+        with:
+          name: Depcheck report
+          path: ${{ github.workspace }}/reports
 
 
 

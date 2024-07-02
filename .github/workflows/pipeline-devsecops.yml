@@ -44,13 +44,13 @@ jobs:
             -Dsonar.organization=curso-devsecops-usach
             -Dsonar.sources=.
             -Dsonar.exclusions=**/node_modules/**
-
+      
       - name: Check SAST Results
         run: |
           # Realiza una solicitud GET a la API de SonarCloud para buscar problemas críticos, altos y medios
           RESPONSE=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: \
             "https://sonarcloud.io/api/issues/search?componentKeys=curso-devsecops-usach_lab-final&severities=CRITICAL,MAJOR,MINOR")
-          echo $RESPONSE
+          echo "API Response: $RESPONSE"
           
           # Extrae el número total de problemas encontrados
           ISSUES_COUNT=$(echo "$RESPONSE" | jq -r .total)
@@ -62,3 +62,4 @@ jobs:
           else
             echo "No vulnerabilities found."
           fi
+

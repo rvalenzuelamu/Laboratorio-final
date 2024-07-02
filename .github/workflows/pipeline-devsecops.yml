@@ -45,25 +45,15 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.exclusions=**/node_modules/**
 
-      - name: Check for Critical, High, and Medium Vulnerabilities
+      - name: Check Quality Gate
         run: |
-          response=$(curl -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/issues/search?organization=curso-devsecops-usach&projectKeys=curso-devsecops-usach_lab-final&severities=CRITICAL,MAJOR,MINOR&statuses=OPEN,REOPENED")
-          count=$(echo $response | jq '.total')
-          if [ "$count" -gt 0 ]; then
-            echo "Found $count critical, high, or medium vulnerabilities"
+          echo "Checking Quality Gate status on SonarCloud..."
+          qualityGateStatus=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/qualitygates/project_status?projectKey=curso-devsecops-usach_lab-final&branch=pipeline-devsecops" | jq -r '.projectStatus.status')
+          if [ "$qualityGateStatus" != "OK" ]; then
+            echo "Quality Gate failed: $qualityGateStatus"
             exit 1
           else
-            echo "No critical, high, or medium vulnerabilities found"
+            echo "Quality Gate passed: $qualityGateStatus"
           fi
-      
-      - name: Check Quality Gate
-        uses: sonarsource/sonarcloud-github-action@v2
-        with:
-          args: >
-            -Dsonar.projectKey=curso-devsecops-usach_lab-final
-            -Dsonar.organization=curso-devsecops-usach
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        continue-on-error: false
         
 

@@ -68,6 +68,7 @@ jobs:
   #        fi
 
   #----------------- SCA ----------------------
+
   SCA:
     needs: SAST
     runs-on: ubuntu-latest
@@ -97,8 +98,9 @@ jobs:
           snyk monitor --all-projects --severity-threshold=high
 
       - name: Convert JSON report to HTML
-        run: npm install -g snyk-to-html
-        run: snyk-to-html -i snyk-report.json -o snyk-report.html
+        run: |
+          npm install -g snyk-to-html
+          snyk-to-html -i snyk-report.json -o snyk-report.html
 
       - name: Upload Dependency Check Report
         uses: actions/upload-artifact@v2
@@ -111,5 +113,6 @@ jobs:
         with:
           name: build-artifacts
           path: build/
+
         
 

@@ -73,33 +73,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2      
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Instalar Dependencias
+      - name: Install dependencies
         run: npm install
 
-      - name: Build project.
-        run: npm run build
-
-      - name: Análisis de Dependencias para Node.js
+      - name: Build project
+        id: build
         run: |
-          echo "Corriendo Análisis de Dependencias para Node.js..."
+          echo "Building React project..."
+          npm run build
+
+      - name: Dependency Check for Node.js
+        run: |
+          echo "Running Dependency Check for Node.js..."
           npm install -g snyk
           snyk test --all-projects --severity-threshold=high --json > snyk-report.json
           snyk monitor --all-projects --severity-threshold=high
 
-      - name: Convertir reporte JSON a HTML 
-        run: cat snyk-report.json | snyk-to-html -o snyk-report.html
+      - name: Convert JSON report to HTML
+        run: npm install -g snyk-to-html
+        run: snyk-to-html -i snyk-report.json -o snyk-report.html
 
-      - name: Actualizar Reporte Análisis de Dependencias
+      - name: Upload Dependency Check Report
         uses: actions/upload-artifact@v2
         with:
           name: dependency-check-report
-          path: ./snyk-report.html
+          path: snyk-report.html
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifacts
+          path: build/
         
 

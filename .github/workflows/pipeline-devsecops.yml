@@ -80,7 +80,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      - name: Instalar Dependencias
         run: npm install
 
       - name: Build project
@@ -96,7 +96,7 @@ jobs:
       - name: Convertir reporte JSON a HTML 
         run: cat snyk-report.json | snyk-to-html -o snyk-report.html
 
-      - name: Upload Dependency Check Report
+      - name: Actualizar Reporte Análisis de Dependencias
         uses: actions/upload-artifact@v2
         with:
           name: dependency-check-report

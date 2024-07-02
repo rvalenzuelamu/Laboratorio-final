@@ -45,15 +45,15 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.exclusions=**/node_modules/**
 
-      - name: Check for Critical, High, and Medium Vulnerabilities
+      - name: Analizando vulnerabilidades críticas, altas y medias.
         run: |
-          echo "Checking for Critical, High, and Medium vulnerabilities..."
+          echo "Analizando vulnerabilidades críticas, altas y medias...."
           vulnerabilities=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/issues/search?organization=curso-devsecops-usach&projectKeys=curso-devsecops-usach_lab-final&branch=pipeline-devsecops&severities=CRITICAL,MAJOR,MINOR&statuses=OPEN,REOPENED" | jq '.total')
            if [ "$vulnerabilities" -gt 0 ]; then
-             echo "Found $vulnerabilities Critical, High, or Medium vulnerabilities"
+             echo "Se encontraron $vulnerabilities vulnerabilities Criticas, Altas, o Medias"
              exit 1
            else
-             echo "No Critical, High, or Medium vulnerabilities found"
+             echo "No se encontraron vulnerabilidades Criticas, Altas, o Medias"
            fi
 
   #    - name: Check Quality Gate

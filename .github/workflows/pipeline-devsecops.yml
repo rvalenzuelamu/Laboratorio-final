@@ -69,6 +69,14 @@ jobs:
 
 
   #----------------- SCA ----------------------
+name: Workflow
+on:
+  push:
+    branches:
+      - pipeline-devsecops
+
+jobs:
+  #----------------- SCA ----------------------
   SCA:
     needs: SAST
     runs-on: ubuntu-latest
@@ -82,11 +90,14 @@ jobs:
       with:
         node-version: '20'
 
+    - name: Install Yarn
+      run: npm install -g yarn
+
     - name: Install dependencies
-      run: npm install
+      run: yarn install
 
     - name: Build project
-      run: npm run build
+      run: yarn build
 
     - name: Dependency Check
       uses: dependency-check/Dependency-Check_Action@1.1.0
@@ -99,13 +110,16 @@ jobs:
         args: >
           --failOnCVSS 7
           --enableRetired
-          --scan package-lock.json
+          --scan yarn.lock
 
     - name: Upload Dependency Check Report
       uses: actions/upload-artifact@v2
       with:
         name: Depcheck report
         path: ${{github.workspace}}/reports/dependency-check-report.html
+
+
+
 
 
         

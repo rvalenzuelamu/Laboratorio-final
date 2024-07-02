@@ -68,14 +68,7 @@ jobs:
   #        fi
 
 
-  #----------------- SCA ----------------------
-name: Workflow
-on:
-  push:
-    branches:
-      - pipeline-devsecops
 
-jobs:
   #----------------- SCA ----------------------
   SCA:
     needs: SAST

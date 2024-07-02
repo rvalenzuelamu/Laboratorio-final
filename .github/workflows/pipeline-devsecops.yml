@@ -67,52 +67,46 @@ jobs:
   #          echo "Quality Gate passed: $qualityGateStatus"
   #        fi
 
-  #----------------- SCA ----------------------
 
+  #----------------- SCA ----------------------
   SCA:
     needs: SAST
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2      
+    
+    - name: Checkout code
+      uses: actions/checkout@v2      
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
 
-      - name: Install dependencies
-        run: npm install
+    - name: Install dependencies
+      run: npm install
 
-      - name: Build project
-        id: build
-        run: |
-          echo "Building React project..."
-          npm run build
+    - name: Build project
+      run: npm run build
 
-      - name: Dependency Check for Node.js
-        run: |
-          echo "Running Dependency Check for Node.js..."
-          npm install -g snyk
-          snyk test --all-projects --severity-threshold=high --json > snyk-report.json
-          snyk monitor --all-projects --severity-threshold=high
+    - name: Dependency Check
+      uses: dependency-check/Dependency-Check_Action@1.1.0
+      id: Depcheck
+      with:
+        project: '${{ github.event.repository.name }}'
+        path: '.'
+        format: 'HTML'
+        out: 'reports'
+        args: >
+          --failOnCVSS 7
+          --enableRetired
+          --scan package-lock.json
 
-      - name: Convert JSON report to HTML
-        run: |
-          npm install -g snyk-to-html
-          snyk-to-html -i snyk-report.json -o snyk-report.html
+    - name: Upload Dependency Check Report
+      uses: actions/upload-artifact@v2
+      with:
+        name: Depcheck report
+        path: ${{github.workspace}}/reports/dependency-check-report.html
 
-      - name: Upload Dependency Check Report
-        uses: actions/upload-artifact@v2
-        with:
-          name: dependency-check-report
-          path: snyk-report.html
-
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: build-artifacts
-          path: build/
 
         
 

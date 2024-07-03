@@ -9,7 +9,7 @@ spec:
   ports:
   - port: 80
     targetPort: 80
-    nodePort: 8080
+    nodePort: 300007
     protocol: TCP
   selector:
     app: netflix-app

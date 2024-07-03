@@ -112,9 +112,13 @@ jobs:
 #        name: JAR
 #       path: ${{github.workspace}}
 #    
-#    - name: Build Docker
-#      run: |
-#        docker build --tag b4b4y4g4x/cursodevsecops-test:latest .
+    - name: Build Docker
+      run: |
+        docker build --build-arg TMDB_V3_API_KEY=0a5c76f39b37918e45f6a8e56b8509c5 --tag ${{ secrets.DOCKER_USER }}/lab-final:latest .
+
+    - name: Push Docker image
+      run: |
+        docker push ${{ secrets.DOCKER_USER }}/lab-final:latest
 #
 #    - name: Push Docker
 #      run: |

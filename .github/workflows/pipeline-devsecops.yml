@@ -104,8 +104,6 @@ SCA:
       id: url
       run: echo "::set-output name=url::$(echo ${{ github.workspace }}/reports/index.html)"
 
-    - name: Display URL
-      run: echo "Dependency Check report URL: ${{ steps.url.outputs.url }}"
 
 
 

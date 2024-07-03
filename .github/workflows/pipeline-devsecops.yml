@@ -50,7 +50,7 @@ jobs:
           echo "Analizando vulnerabilidades críticas, altas y medias...."
           vulnerabilities=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/issues/search?organization=curso-devsecops-usach&projectKeys=curso-devsecops-usach_lab-final&branch=pipeline-devsecops&severities=CRITICAL,MAJOR,MINOR&statuses=OPEN,REOPENED" | jq '.total')
            if [ "$vulnerabilities" -gt 0 ]; then
-             echo "Se encontraron $vulnerabilities vulnerabilities Criticas, Altas, o Medias"
+             echo "Se encontraron $vulnerabilities Criticas, Altas, o Medias"
              exit 1
            else
              echo "No se encontraron vulnerabilidades Criticas, Altas, o Medias"
@@ -90,6 +90,16 @@ jobs:
         with:
           #args: --all-projects --severity-threshold=high --json
           args: --all-projects --severity-threshold=medium --json > snyk-output.json 
+
+      - name: Check Snyk scan results
+        run: |
+          vulnerabilities=$(cat snyk-output.json | jq '.vulnerabilities | length')
+          if [[ $vulnerabilities -gt 0 ]]; then
+            echo "Se encontraron $vulnerabilities Medias"
+            exit 1
+          else
+            echo "No se encontraron vulnerabilidades. Continúa el pipeline."
+          fi
           
 
 

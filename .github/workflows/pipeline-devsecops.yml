@@ -165,6 +165,201 @@ jobs:
           kubectl apply -f Kubernetes/deployment.yml
           kubectl apply -f Kubernetes/service.yml
 
+name: Workflow
+on:
+  push:
+    branches:
+      - pipeline-devsecops
+
+jobs:
+  #----------------- SAST ----------------------
+  SAST:
+    runs-on: ubuntu-latest
+    steps:
+#      - name: Set up JDK 11
+#        uses: actions/setup-java@v2
+#        with:
+#          distribution: 'adopt'
+#          java-version: '11'
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies with Yarn 
+        run: yarn install
+
+      - name: Build project
+        run: yarn run build
+
+      - name: List Built Files
+        run: ls -l
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v2 
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: curso-devsecops-usach_lab-final
+          SONAR_ORGANIZATION: curso-devsecops-usach
+        with:
+          args: >
+            -Dsonar.projectKey=curso-devsecops-usach_lab-final
+            -Dsonar.organization=curso-devsecops-usach
+            -Dsonar.sources=.
+            -Dsonar.exclusions=**/node_modules/**
+
+      - name: Analizando vulnerabilidades críticas, altas y medias.
+        run: |
+          echo "Analizando vulnerabilidades críticas, altas y medias...."
+          vulnerabilities=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/issues/search?organization=curso-devsecops-usach&projectKeys=curso-devsecops-usach_lab-final&branch=pipeline-devsecops&severities=CRITICAL,MAJOR,MINOR&statuses=OPEN,REOPENED" | jq '.total')
+           if [ "$vulnerabilities" -gt 0 ]; then
+             echo "Se encontraron $vulnerabilities Criticas, Altas, o Medias"
+             exit 1
+           else
+             echo "No se encontraron vulnerabilidades Criticas, Altas, o Medias"
+           fi
+
+  #    - name: Check Quality Gate
+  #      run: |
+  #        echo "Checking Quality Gate status on SonarCloud..."
+  #        qualityGateStatus=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/qualitygates/project_status?projectKey=curso-devsecops-usach_lab-final&branch=pipeline-devsecops" | jq -r '.projectStatus.status')
+  #        if [ "$qualityGateStatus" != "OK" ]; then
+  #          echo "Quality Gate failed: $qualityGateStatus"
+  #          exit 1
+  #        else
+  #          echo "Quality Gate passed: $qualityGateStatus"
+  #        fi
+
+
+#----------------- SCA ----------------------
+  SCA:
+    needs: SAST
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+  
+      - name: Checkout code
+        uses: actions/checkout@v2
+  
+      - name: Run Snyk to check for vulnerabilities
+        id: snyk_scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --all-projects --severity-threshold=high --json
+          #args: --all-projects --severity-threshold=medium --json > snyk-output.json 
+
+# ----------------- Docker Build Image ------------------
+  
+  DockerBuild:
+    needs: SCA
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Docker Login
+      uses: docker/login-action@v3.0.0
+      with:
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_PASS }}
+
+#    - name: Download JAR
+#      uses: actions/download-artifact@master
+#      with:
+#        name: JAR
+#       path: ${{github.workspace}}
+#    
+    - name: Build Docker
+      run: |
+        docker build --build-arg TMDB_V3_API_KEY=0a5c76f39b37918e45f6a8e56b8509c5 --tag ${{ secrets.DOCKER_USER }}/lab-final:latest .
+
+    - name: Push Docker image
+      run: |
+        docker push ${{ secrets.DOCKER_USER }}/lab-final:latest
+
+# ------------------ Docker Scan ------------------------------------
+
+  DockerScan:
+    needs: DockerBuild
+    runs-on: ubuntu-latest
+    steps:
+    
+    - name: Docker Login
+      uses: docker/login-action@v3.0.0
+      with:
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_PASS }}
+
+    - name: Pull de la Imagen Docker
+      run: |
+        docker pull ${{ secrets.DOCKER_USER }}/lab-final:latest
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: '${{ secrets.DOCKER_USER }}/lab-final:latest'
+        format: 'table'
+        #exit-code: 1
+        #ignore-unfixed: true
+        #vuln-type: 'os,library'
+        #severity: 'CRITICAL,HIGH,MEDIUM,LOW' 
+    
+    - name: Push Docker
+      run: | 
+        docker push ${{ secrets.DOCKER_USER }}/lab-final:latest
+
+# ------------------ Deploy to Kubernetes ------------------------------
+
+  Deploy:
+    needs: DockerScan
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f Kubernetes/deployment.yml
+          kubectl apply -f Kubernetes/service.yml
+
+
+# ------------------ DAST with OWASP ZAP ------------------------------
+
+  DAST:
+    needs: Deploy
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Start OWASP ZAP
+        run: |
+          docker run -d --name owasp-zap -u zap -p 8080:8080 owasp/zap2docker-stable zap.sh -daemon -port 8080 -host 0.0.0.0 -config api.disablekey=true
+          sleep 30 # Give ZAP some time to start
+
+      - name: Run OWASP ZAP Baseline Scan
+        run: |
+          docker run --rm --link owasp-zap -v $(pwd):/zap/wrk:rw -t owasp/zap2docker-stable zap-baseline.py -t http://your-app-url -g gen.conf -r zap_report.html
+
+      - name: Upload OWASP ZAP Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: zap-report
+          path: zap_report.html
+
+      - name: Stop OWASP ZAP
+        run: docker stop owasp-zap
+
             
 
 

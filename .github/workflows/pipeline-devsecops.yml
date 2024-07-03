@@ -82,23 +82,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
   
+#      - name: Run Snyk to check for vulnerabilities
+#        id: snyk_scan
+#        uses: snyk/actions/node@master
+#        env:
+#          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+#        with:
+          #args: --all-projects --severity-threshold=high --json
+#          args: --all-projects --severity-threshold=medium --json > snyk-output.json 
+
       - name: Run Snyk to check for vulnerabilities
         id: snyk_scan
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          #args: --all-projects --severity-threshold=high --json
-          args: --all-projects --severity-threshold=medium --json > snyk-output.json 
-
-      - name: Check Snyk scan results
         run: |
+          snyk --all-projects --severity-threshold=medium --json > snyk-output.json
           vulnerabilities=$(cat snyk-output.json | jq '.vulnerabilities | length')
           if [[ $vulnerabilities -gt 0 ]]; then
-            echo "Se encontraron $vulnerabilities Medias"
+            echo "Found $vulnerabilities medium severity vulnerabilities."
             exit 1
-          else
-            echo "No se encontraron vulnerabilidades. Continúa el pipeline."
           fi
           
 

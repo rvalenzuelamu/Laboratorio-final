@@ -96,11 +96,11 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: |
-          snyk --all-projects --severity-threshold=medium --json > snyk-output.json || true
-          vulnerabilities=$(cat snyk-output.json | jq '.vulnerabilities | length')
-          if [[ $vulnerabilities -gt 0 ]]; then
-            echo "Found $vulnerabilities medium severity vulnerabilities."
-            exit 1
+          snyk --all-projects --severity-threshold=medium --json > snyk-output.json && \
+          vulnerabilities=$(cat snyk-output.json | jq '.vulnerabilities | length') && \
+          if [[ $vulnerabilities -gt 0 ]]; then \
+            echo "Found $vulnerabilities medium severity vulnerabilities." \
+            exit 1 \
           fi
   
       - name: Continue pipeline

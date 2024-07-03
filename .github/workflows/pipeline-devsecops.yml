@@ -111,9 +111,11 @@ jobs:
         name: Depcheck report
         path: ${{github.workspace}}/reports/dependency-check-report.html
   
-    - name: Generate URL for Dependency Check report
-      id: url
-      run: echo "::set-output name=url::$(echo ${{github.workspace}}/reports/index.html)"
+    - name: Upload Test result
+      uses: actions/upload-artifact@master
+      with:
+        name: Depcheck report
+        path: ${{github.workspace}}/reports
 
 
 

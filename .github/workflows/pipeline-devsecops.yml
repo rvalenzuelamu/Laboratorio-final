@@ -151,7 +151,19 @@ jobs:
       run: | 
         docker push ${{ secrets.DOCKER_USER }}/lab-final:latest
 
+# ------------------ Deploy to Kubernetes ------------------------------
 
+  Deploy:
+    needs: DockerScan
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f Kubernetes/deployment.yml
+          kubectl apply -f Kubernetes/service.yml
 
             
 
